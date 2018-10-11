@@ -38,8 +38,21 @@ namespace ComputerGraphicsCourse
 	Ray RayThruPixel(const Camera& camera, const int i, const int j)
 	{
 		// YOUR CODE FOR ASSIGNMENT 2 HERE.  
-		Eigen::Vector3d origin = Eigen::Vector3d((i - camera.Width / 2) / 100., (camera.Height / 2 - j) / 100., 1);
-		Eigen::Vector3d direction = Eigen::Vector3d(0, 0, -1);
+		Eigen::Vector3d u, v, w, up, P0, P1;
+		double alpha, beta;
+
+		P0 = camera.LookFrom;
+		w = camera.LookAt - camera.LookFrom;
+		u = -w.cross(up);
+		v = u.cross(-w);
+
+		alpha = tan(camera.FoV_X / 2)*(i - (camera.Width / 2)) / (camera.Width / 2);
+		beta = tan(camera.FoV_Y / 2)*((camera.Height / 2) - j) / (camera.Height / 2);
+
+		P1 = (alpha*u + beta * v - w).cwiseQuotient((alpha*u + beta * v - w).cwiseAbs());
+
+		Eigen::Vector3d origin = P0; // Eigen::Vector3d((i - camera.Width / 2) / 100., (camera.Height / 2 - j) / 100., 1);
+		Eigen::Vector3d direction = P1; // Eigen::Vector3d(0, 0, -1);
 		return Ray(origin, direction);
 	}
 
