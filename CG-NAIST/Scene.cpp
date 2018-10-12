@@ -136,19 +136,44 @@ namespace ComputerGraphicsCourse
 		/* return positive distance from ray origin to intersection */
 		/* return -1, if no sphere intersects */
 
-		/* solve the eq. : at^2 + bt + c = 0 */
+		double a, b, c, delta, t;
 
+		a = ray.P1.dot(ray.P1);
+		b = 2 * ray.P1.dot(ray.P0 - C);
+		c = (ray.P0 - C).dot(ray.P0 - C) - pow(Radius,2);
+
+		/* solve the eq. : at^2 + bt + c = 0 */
+		delta = pow(b,2) - 4 * a*c;
 
 		/* Complex roots: no intersection */
+		if (delta < 0)
+			return -1;
+		
+		else if (delta = 0) //intersects with sphere surface
+			t = -b / (2 * a);
+		
+		else //intersects the sphere on 2 points
+		{
+			/* 2 roots found */
+			double t1, t2;
 
-		/* 2 roots found */
+			t1 = (-b - sqrt(delta)) / (2 * a);
+			t2 = (-b + sqrt(delta)) / (2 * a);
+			
+			/* 2 real positive roots: pick smaller root */
+			if(t1 > 0 && t2 > 0)
+				 return t = fmin(t1, t2);
+			
+			/* One positive, one negative root: ray origin inside sphere (pick + root) */
+			else if (t1 > 0 && t2 < 0 || t1 < 0 && t2 > 0)
+			{
+				//t = pick + t1 ? t2 ? ;
+			}
 
-		/* 2 real positive roots: pick smaller root */
-
-		/* One positive, one negative root: ray origin inside sphere (pick + root) */
-
-		/* Both negative, no intersection */
-		return -1;
+			/* Both negative, no intersection */
+			else
+				return -1;
+		}
 	}
 
 #ifdef TRIANGLE_NORMAL
