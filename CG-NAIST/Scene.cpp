@@ -150,7 +150,7 @@ namespace ComputerGraphicsCourse
 		if (delta < 0)
 			return -1;
 		
-		else if (delta = 0) //intersects with sphere surface
+		else if (delta == 0) //intersects with sphere surface
 			t = -b / (2 * a);
 		
 		else //intersects the sphere on 2 points
@@ -163,19 +163,24 @@ namespace ComputerGraphicsCourse
 			
 			/* 2 real positive roots: pick smaller root */
 			if (t1 > 0 && t2 > 0)
-				return t = fmin(t1, t2);
+				t = fmin(t1, t2);
 
 			/* One positive, one negative root: ray origin inside sphere (pick + root) */
 			else if (t1 > 0 && t2 < 0)
-				return t = t1;
+				t = t1;
 
 			else if (t1 < 0 && t2 > 0)
-				return t = t2;
+				t = t2;
 
 			/* Both negative, no intersection */
 			else
 				return -1;
 		}
+
+		position = ray.P0 + ray.P1*t;
+		normal = (position - C) / (position - C).norm();
+
+		return t;
 	}
 
 #ifdef TRIANGLE_NORMAL
@@ -196,22 +201,68 @@ namespace ComputerGraphicsCourse
 		if (hit.HitObject == NULL) return Eigen::Vector3d(0, 0, 0);
 		Material mtrl(hit.HitObject->material);
 		Eigen::Vector3d color = mtrl.ambient + mtrl.emission;
-
+		
 		/* Ignore Ka, Ke, and Ks terms from the shading equation on pp.7 */
 		Eigen::Vector3d p = hit.pos;
 		Eigen::Vector3d n = hit.nor.normalized();
-
+		
 		// YOUR CODE FOR ASSIGNMENT 3 HERE.  
 
 		// Execute the following processes for each light
-		// 1. calculate direction and intensity of incoming light
+		for (unsigned int i = 0; i < scene.lights.size(); i++)
+		{
+			Light light = scene.lights[i];
+			Eigen::Vector3d lightPos;
+			lightPos[0] = light.position[0];
+			lightPos[1] = light.position[1];
+			lightPos[2]= light.position[2];
+			Eigen::Vector3d intensity = light.color;
+			Eigen::Vector3d dir;
 
-		// 2. check if the light is visible from the hit point or not
+			// 1. calculate direction and intensity of incoming light
 
-		// 3. calculate diffuse and specular shading 
+			/*Point light*/
+			if (light.position[3] == 1)
+			{
+				/*Direction = everywhere*/
+				dir = lightPos - p;
 
-		// 4. *option* calculate recursive specular reflection
+				/*Intensity = with attenuation*/
+				intensity /= light.attenuation[0] + light.attenuation[1] * dir.norm() + light.attenuation[2] * pow(dir.norm(),2);
+			}
+			/*Directional light*/
+			else // == 0
+			{
+				/*Direction = light.position[n] are vector coordinates*/
+				dir = - lightPos;
+				/*Intensity = homogeneous, so we keep intensity variable as it is*/
+			}
+			
 
+			// 2. check if the light is visible from the hit point or not
+			Ray shadowRay(p+0.00001*dir, dir); //from hit point to light src
+			IntersectionInfo sHit = Intersect(shadowRay, scene);
+
+			if (sHit.HitObject != NULL) {
+				// if the shadow ray hits an object, skip the light
+				continue;
+			}
+
+			// 3. calculate diffuse and specular shading 
+			Eigen::Vector3d L = shadowRay.P1.normalized();
+			Eigen::Vector3d H = (dir.normalized() - hit.ray.P1).normalized();
+
+			/*Diffuse color(RGB) * light color(RGB) * reflection term(scalar)*/
+			color += mtrl.diffuse.cwiseProduct(intensity)*fmax(L.dot(n),0);
+			
+			/*specular color(RGB) * light color(RGB) * reflection term(scalar)*/
+			
+			color += mtrl.specular.cwiseProduct(intensity)*pow(fmax(H.dot(n), 0),mtrl.shininess);
+
+			// 4. *option* calculate recursive specular reflection
+
+		}
+			
 		return color;
 	}
 
