@@ -82,17 +82,30 @@ namespace ComputerGraphicsCourse
 
 	double Intersect(const Ray& ray, const Object* obj, Eigen::Vector3d &position, Eigen::Vector3d &normal)
 	{
-		Eigen::Vector4d p0(ray.P0[0], ray.P0[1], ray.P0[2], 1), p1(ray.P1[0], ray.P1[1], ray.P1[2], 0);
-		// invert transform
+		Eigen::Vector4d p0(ray.P0[0], ray.P0[1], ray.P0[2], 1), //1:position
+			p1(ray.P1[0], ray.P1[1], ray.P1[2], 0); //0:vector
+		
 		// YOUR CODE FOR ASSIGNMENT 4 HERE.  
+		// Inversely transform p0 and p1 here.
+		// p0 = M-1*p0, p1=M-1*p1 (contravariant vector)
+		Eigen::Matrix4d M = obj->transform;
+		p0 = M.inverse()*p0;
+		p1 = M.inverse()*p1;
 
 		Ray transformedRay(p0.block<3, 1>(0, 0), p1.block<3, 1>(0, 0));
 		double t = obj->Intersect(transformedRay, position, normal);
 
 		if (t < 0) return t;
 
-		// transform the results
+		// transform the results (position and normal)
 		// YOUR CODE FOR ASSIGNMENT 4 HERE.  
+		Eigen::Vector4d pos(position[0], position[1], position[2], 1), 
+			norm(normal[0], normal[1], normal[2], 0);
+		
+		// pos = M*pos, norm = (M-1).transpose() * norm (covariant vector)
+		// set pos and norm into position and normal, respectively.
+		pos = M*pos;
+		norm = M.inverse().transpose()*norm;
 
 		return t;
 	}
@@ -271,7 +284,49 @@ namespace ComputerGraphicsCourse
 	Eigen::Matrix4d Transform::rotate(const float degrees, const Eigen::Vector3d& axis)
 	{
 		Eigen::Matrix4d ret = Eigen::Matrix4d::Identity();
-		// YOUR CODE FOR ASSIGNMENT 4 HERE.  
+		Eigen::Matrix3d A = Eigen::Matrix3d::Zero();
+		Eigen::Matrix3d R;
+		// YOUR CODE FOR ASSIGNMENT 4 HERE. 
+		A(0, 1) = -1 * axis[2];
+		A(0, 2) = axis[1];
+		A(1, 0) = axis[0];
+		A(1, 2) = -1 * axis[0];
+		A(2, 0) = -1 * axis[1];
+		A(2, 1) = axis[0];
+
+		R = cos(degrees)*Eigen::Matrix3d::Identity() + (1 - cos(degrees))*axis*axis.transpose() + sin(degrees)*A;
+
+		/*Eigen::Vector3d axis_x(1, 0, 0);
+		Eigen::Vector3d axis_y(0, 1, 0);
+		Eigen::Vector3d axis_z(0, 0, 1);
+
+		if (axis == axis_x)
+		{
+			ret(1, 1) = cos(degrees);
+			ret(1, 2) = -sin(degrees);
+			ret(2, 1) = sin(degrees);
+			ret(2, 2) = cos(degrees);
+		}
+		else if (axis == axis_y)
+		{
+			ret(0, 0) = cos(degrees);
+			ret(0, 2) = sin(degrees);
+			ret(2, 0) = -sin(degrees);
+			ret(2, 2) = cos(degrees);
+		}
+		else if (axis == axis_z)
+		{
+			ret(0, 0) = cos(degrees);
+			ret(0, 1) = -sin(degrees);
+			ret(1, 0) = sin(degrees);
+			ret(1, 1) = cos(degrees);
+		}*/
+
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+				ret(i, j) = R(i, j);
+		}
 
 		return ret;
 	}
@@ -280,6 +335,9 @@ namespace ComputerGraphicsCourse
 	{
 		Eigen::Matrix4d ret = Eigen::Matrix4d::Identity();
 		// YOUR CODE FOR ASSIGNMENT 4 HERE.  
+		ret(0,0) = sx;
+		ret(1,1) = sy;
+		ret(2,2) = sz;
 
 		return ret;
 	}
@@ -288,6 +346,9 @@ namespace ComputerGraphicsCourse
 	{
 		Eigen::Matrix4d ret = Eigen::Matrix4d::Identity();
 		// YOUR CODE FOR ASSIGNMENT 4 HERE.  
+		ret(0, 3) = tx;
+		ret(1, 3) = ty;
+		ret(2, 3) = tz;
 
 		return ret;
 	}
