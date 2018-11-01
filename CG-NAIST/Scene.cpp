@@ -258,10 +258,10 @@ namespace ComputerGraphicsCourse
 			
 
 			// 2. check if the light is visible from the hit point or not
-			Ray shadowRay(p+0.00001*dir, dir); //from hit point to light src
+			Ray shadowRay(p+0.00001*dir.normalized(), dir.normalized()); //from hit point to light src
 			IntersectionInfo sHit = Intersect(shadowRay, scene);
 
-			if (sHit.HitObject != NULL) {
+			if (sHit.HitObject != NULL && sHit.Distance < dir.norm()/ light.position[3]) {
 				// if the shadow ray hits an object, skip the light
 				continue;
 			}
