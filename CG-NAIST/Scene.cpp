@@ -103,9 +103,14 @@ namespace ComputerGraphicsCourse
 			norm(normal[0], normal[1], normal[2], 0);
 		
 		// pos = M*pos, norm = (M-1).transpose() * norm (covariant vector)
-		// set pos and norm into position and normal, respectively.
 		pos = M*pos;
 		norm = M.inverse().transpose()*norm;
+		// set pos and norm into position and normal, respectively.
+		for (int i = 0; i < 3; i++)
+		{
+			position[i] = pos[i];
+			normal[i] = norm[i];
+		}
 
 		return t;
 	}
@@ -286,41 +291,17 @@ namespace ComputerGraphicsCourse
 		Eigen::Matrix4d ret = Eigen::Matrix4d::Identity();
 		Eigen::Matrix3d A = Eigen::Matrix3d::Zero();
 		Eigen::Matrix3d R;
+
+		double rad = degrees * M_PI / 180.0;
 		// YOUR CODE FOR ASSIGNMENT 4 HERE. 
-		A(0, 1) = -1 * axis[2];
-		A(0, 2) = axis[1];
-		A(1, 0) = axis[0];
-		A(1, 2) = -1 * axis[0];
-		A(2, 0) = -1 * axis[1];
-		A(2, 1) = axis[0];
+		A(0, 1) = -axis(2);
+		A(0, 2) = axis(1);
+		A(1, 0) = axis(2);
+		A(1, 2) = -axis(0);
+		A(2, 0) = -axis(1);
+		A(2, 1) = axis(0);
 
-		R = cos(degrees)*Eigen::Matrix3d::Identity() + (1 - cos(degrees))*axis*axis.transpose() + sin(degrees)*A;
-
-		/*Eigen::Vector3d axis_x(1, 0, 0);
-		Eigen::Vector3d axis_y(0, 1, 0);
-		Eigen::Vector3d axis_z(0, 0, 1);
-
-		if (axis == axis_x)
-		{
-			ret(1, 1) = cos(degrees);
-			ret(1, 2) = -sin(degrees);
-			ret(2, 1) = sin(degrees);
-			ret(2, 2) = cos(degrees);
-		}
-		else if (axis == axis_y)
-		{
-			ret(0, 0) = cos(degrees);
-			ret(0, 2) = sin(degrees);
-			ret(2, 0) = -sin(degrees);
-			ret(2, 2) = cos(degrees);
-		}
-		else if (axis == axis_z)
-		{
-			ret(0, 0) = cos(degrees);
-			ret(0, 1) = -sin(degrees);
-			ret(1, 0) = sin(degrees);
-			ret(1, 1) = cos(degrees);
-		}*/
+		R = cos(rad)*Eigen::Matrix3d::Identity() + (1 - cos(rad))*axis*axis.transpose() + sin(rad)*A;
 
 		for (int i = 0; i < 3; i++)
 		{
